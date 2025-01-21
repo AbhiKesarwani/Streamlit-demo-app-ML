@@ -1,124 +1,85 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+import seaborn as sns
+import plotly.express as px
 
-st.title('🤖 Machine Learning App')
+st.set_page_config(page_title='Penguin Classifier App', layout='wide')
 
-st.info('This is app builds a machine learning model!')
+st.title('🐧 Penguin Species Classifier')
+st.markdown("This app predicts the species of a penguin based on input features. The dataset used is the Palmer Archipelago (Antarctica) penguin dataset.")
 
-with st.expander('Data'):
-  st.write('**Raw data**')
-  df = pd.read_csv('https://raw.githubusercontent.com/dataprofessor/data/master/penguins_cleaned.csv')
-  df
+# Load data
+@st.cache
+def load_data():
+    return pd.read_csv('https://raw.githubusercontent.com/dataprofessor/data/master/penguins_cleaned.csv')
 
-  st.write('**X**')
-  X_raw = df.drop('species', axis=1)
-  X_raw
+df = load_data()
 
-  st.write('**y**')
-  y_raw = df.species
-  y_raw
+# Display dataset
+with st.expander('Dataset Overview'):
+    st.dataframe(df)
 
-with st.expander('Data visualization'):
-  st.scatter_chart(data=df, x='bill_length_mm', y='body_mass_g', color='species')
+# Data visualization
+st.subheader('Data Visualization')
+col1, col2 = st.columns(2)
 
-# Input features
-with st.sidebar:
-  st.header('Input features')
-  island = st.selectbox('Island', ('Biscoe', 'Dream', 'Torgersen'))
-  bill_length_mm = st.slider('Bill length (mm)', 32.1, 59.6, 43.9)
-  bill_depth_mm = st.slider('Bill depth (mm)', 13.1, 21.5, 17.2)
-  flipper_length_mm = st.slider('Flipper length (mm)', 172.0, 231.0, 201.0)
-  body_mass_g = st.slider('Body mass (g)', 2700.0, 6300.0, 4207.0)
-  gender = st.selectbox('Gender', ('male', 'female'))
-  
-  # Create a DataFrame for the input features
-  data = {'island': island,
-          'bill_length_mm': bill_length_mm,
-          'bill_depth_mm': bill_depth_mm,
-          'flipper_length_mm': flipper_length_mm,
-          'body_mass_g': body_mass_g,
-          'sex': gender}
-  input_df = pd.DataFrame(data, index=[0])
-  input_penguins = pd.concat([input_df, X_raw], axis=0)
+with col1:
+    st.write('### Pairplot')
+    sns.pairplot(df, hue='species', height=2.5)
+    st.pyplot()
 
-with st.expander('Input features'):
-  st.write('**Input penguin**')
-  input_df
-  st.write('**Combined penguins data**')
-  input_penguins
+with col2:
+    st.write('### Body Mass vs Bill Length')
+    fig = px.scatter(df, x='bill_length_mm', y='body_mass_g', color='species', title='Body Mass vs Bill Length')
+    st.plotly_chart(fig)
 
+# Sidebar for user input
+st.sidebar.header('Input Features')
 
-# Data preparation
-# Encode X
-encode = ['island', 'sex']
-df_penguins = pd.get_dummies(input_penguins, prefix=encode)
+island = st.sidebar.selectbox('Island', df['island'].unique())
+bill_length_mm = st.sidebar.slider('Bill Length (mm)', min_value=32.1, max_value=59.6, value=43.9)
+bill_depth_mm = st.sidebar.slider('Bill Depth (mm)', min_value=13.1, max_value=21.5, value=17.2)
+flipper_length_mm = st.sidebar.slider('Flipper Length (mm)', min_value=172.0, max_value=231.0, value=201.0)
+body_mass_g = st.sidebar.slider('Body Mass (g)', min_value=2700.0, max_value=6300.0, value=4207.0)
+gender = st.sidebar.selectbox('Gender', df['sex'].unique())
 
-X = df_penguins[1:]
-input_row = df_penguins[:1]
+# Prepare input data
+input_data = pd.DataFrame({
+    'island': [island],
+    'bill_length_mm': [bill_length_mm],
+    'bill_depth_mm': [bill_depth_mm],
+    'flipper_length_mm': [flipper_length_mm],
+    'body_mass_g': [body_mass_g],
+    'sex': [gender]
+})
 
-# Encode y
-target_mapper = {'Adelie': 0,
-                 'Chinstrap': 1,
-                 'Gentoo': 2}
-def target_encode(val):
-  return target_mapper[val]
+# Encode categorical variables
+df_encoded = pd.get_dummies(df, columns=['island', 'sex'])
+input_encoded = pd.get_dummies(input_data, columns=['island', 'sex'])
+input_encoded = input_encoded.reindex(columns=df_encoded.columns, fill_value=0).drop('species', axis=1)
 
-y = y_raw.apply(target_encode)
-
-with st.expander('Data preparation'):
-  st.write('**Encoded X (input penguin)**')
-  input_row
-  st.write('**Encoded y**')
-  y
-
-# Model training and inference
-## Train the ML model
+# Model training
+X = df_encoded.drop('species', axis=1)
+y = df['species']
 clf = RandomForestClassifier()
 clf.fit(X, y)
 
-## Apply model to make predictions
-prediction = clf.predict(input_row)
-prediction_proba = clf.predict_proba(input_row)
+# Prediction
+prediction = clf.predict(input_encoded)
+prediction_proba = clf.predict_proba(input_encoded)
 
-df_prediction_proba = pd.DataFrame(prediction_proba)
-df_prediction_proba.columns = ['Adelie', 'Chinstrap', 'Gentoo']
-df_prediction_proba.rename(columns={0: 'Adelie',
-                                 1: 'Chinstrap',
-                                 2: 'Gentoo'})
+# Display prediction
+st.subheader('Prediction')
+st.write(f'The predicted species is **{prediction[0]}**.')
 
-# Display predicted species
-st.subheader('Predicted Species')
-st.dataframe(df_prediction_proba,
-             column_config={
-               'Adelie': st.column_config.ProgressColumn(
-                 'Adelie',
-                 format='%f',
-                 width='medium',
-                 min_value=0,
-                 max_value=1
-               ),
-               'Chinstrap': st.column_config.ProgressColumn(
-                 'Chinstrap',
-                 format='%f',
-                 width='medium',
-                 min_value=0,
-                 max_value=1
-               ),
-               'Gentoo': st.column_config.ProgressColumn(
-                 'Gentoo',
-                 format='%f',
-                 width='medium',
-                 min_value=0,
-                 max_value=1
-               ),
-             }, hide_index=True)
+st.write('### Prediction Probabilities')
+proba_df = pd.DataFrame(prediction_proba, columns=clf.classes_)
+st.bar_chart(proba_df.T)
 
-
-penguins_species = np.array(['Adelie', 'Chinstrap', 'Gentoo'])
-st.success(str(penguins_species[prediction][0]))
-
-
-
+st.subheader('Model Explanation')
+st.markdown("""
+The RandomForestClassifier is a robust machine learning algorithm that builds multiple decision trees and merges them together to get a more accurate and stable prediction.
+""")
 
