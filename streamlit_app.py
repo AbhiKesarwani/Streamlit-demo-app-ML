@@ -19,10 +19,5 @@ with st.expander('Data'):
   y
 
 with st.expander("Data Visualisation"):
-  chart = alt.Chart(df).mark_point().encode(
-        x='bill_length:Q',
-        y='body_mass:Q',
-        color='species:N'
-    )
-  st.altair_chart(chart, use_container_width=True)
+  st.scatter_chart(data=df,x='bill_length_mm',y='body_mass_g')
 
