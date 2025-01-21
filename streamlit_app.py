@@ -9,3 +9,11 @@ with st.expander('Data'):
   st.write("**Raw Data**")
   df = pd.read_csv("https://raw.githubusercontent.com/dataprofessor/data/refs/heads/master/penguins_cleaned.csv")
   df
+
+df.write("**X**")
+g = df.drop("species", axis=1)
+g
+
+st.write("**y**")
+y = df.dpecies
+y
