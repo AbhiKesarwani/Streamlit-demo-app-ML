@@ -10,7 +10,7 @@ with st.expander('Data'):
   df = pd.read_csv("https://raw.githubusercontent.com/dataprofessor/data/refs/heads/master/penguins_cleaned.csv")
   df
 
-df.write("**X**")
+st.write("**X**")
 g = df.drop("species", axis=1)
 g
 
