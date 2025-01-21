@@ -29,11 +29,11 @@ with col1:
     st.write('### Pairplot')
     sns.pairplot(df, hue='species', height=2.5)
     st.pyplot()
-
-with col2:
-    st.write('### Body Mass vs Bill Length')
-    fig = px.scatter(df, x='bill_length_mm', y='body_mass_g', color='species', title='Body Mass vs Bill Length')
-    st.plotly_chart(fig)
+    
+with st.expander('Data visualization'):
+    fig, ax = plt.subplots()
+    sns.scatterplot(data=df, x='bill_length_mm', y='body_mass_g', hue='species', ax=ax)
+    st.pyplot(fig)
 
 # Sidebar for user input
 st.sidebar.header('Input Features')
