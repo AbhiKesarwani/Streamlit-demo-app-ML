@@ -15,5 +15,5 @@ g = df.drop("species", axis=1)
 g
 
 st.write("**y**")
-y = df.dpecies
+y = df.species
 y
