@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import seaborn as sns
+import matplotlib.pyplot as plt
 import plotly.express as px
 
 st.set_page_config(page_title='Penguin Classifier App', layout='wide')
@@ -27,10 +28,11 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.write('### Pairplot')
-    sns.pairplot(df, hue='species', height=2.5)
-    st.pyplot()
-    
-with st.expander('Data visualization'):
+    fig = sns.pairplot(df, hue='species', height=2.5)
+    st.pyplot(fig)
+
+with col2:
+    st.write('### Scatter Plot')
     fig, ax = plt.subplots()
     sns.scatterplot(data=df, x='bill_length_mm', y='body_mass_g', hue='species', ax=ax)
     st.pyplot(fig)
@@ -82,4 +84,3 @@ st.subheader('Model Explanation')
 st.markdown("""
 The RandomForestClassifier is a robust machine learning algorithm that builds multiple decision trees and merges them together to get a more accurate and stable prediction.
 """)
-
