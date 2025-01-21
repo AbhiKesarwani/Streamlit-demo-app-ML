@@ -24,5 +24,5 @@ with st.expander("Data Visualisation"):
         y='body_mass:Q',
         color='species:N'
     )
-    st.altair_chart(chart, use_container_width=True)
+  st.altair_chart(chart, use_container_width=True)
 
